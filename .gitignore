@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+# Customer data never belongs in this public repo.
+*.csv
+*.xlsx
+.env*
+
+# Local engineering handoff (machine paths); not published.
+STATUS.md
