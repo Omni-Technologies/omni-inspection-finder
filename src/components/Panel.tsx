@@ -187,21 +187,29 @@ export function SiteDetail(p: DetailProps) {
                 onMouseLeave={() => p.onHover(null)}
               >
                 <span className="row-main">
-                  <span className="row-title">
-                    {n.list[0].title}
-                    {n.list.length > 1 && <span className="more"> +{n.list.length - 1}</span>}
-                  </span>
+                  <span className="row-title">{n.list[0].title}</span>
                   <span className="row-sub">
                     {n.miles.toFixed(1)} mi · {city(n.site) || n.site.address}
                   </span>
                 </span>
-                <DueChip inspection={n.list[0]} compact />
+                <DueChips list={n.list} />
               </button>
             </li>
           ))}
         </ul>
       </section>
     </div>
+  );
+}
+
+/** Every due date at a site, soonest first. */
+function DueChips({ list }: { list: Inspection[] }) {
+  return (
+    <span className="row-dues">
+      {list.map((i) => (
+        <DueChip key={i.id} inspection={i} compact />
+      ))}
+    </span>
   );
 }
 
@@ -233,7 +241,7 @@ export function InViewList({ entries, unplaced, totalShown, onSelect, onHover }:
                       <span className="row-title">{s.inspections[0].title}</span>
                       <span className="row-sub">{s.address || 'No address'}</span>
                     </span>
-                    <DueChip inspection={s.inspections[0]} compact />
+                    <DueChips list={s.inspections} />
                   </button>
                 </li>
               ))}
@@ -256,13 +264,10 @@ export function InViewList({ entries, unplaced, totalShown, onSelect, onHover }:
               onMouseLeave={() => onHover(null)}
             >
               <span className="row-main">
-                <span className="row-title">
-                  {list[0].title}
-                  {list.length > 1 && <span className="more"> +{list.length - 1}</span>}
-                </span>
+                <span className="row-title">{list[0].title}</span>
                 <span className="row-sub">{site.address}</span>
               </span>
-              <DueChip inspection={list[0]} compact />
+              <DueChips list={list} />
             </button>
           </li>
         ))}

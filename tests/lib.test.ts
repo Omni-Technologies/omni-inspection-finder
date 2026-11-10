@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseCsv } from '../src/lib/csv.ts';
 import { parseAddressParts, simplifyStreet, addressForGeocoding, normalizeAddressKey } from '../src/lib/address.ts';
 import { parseInspections, parseDate, urgencyOf, relativeDue } from '../src/lib/inspections.ts';
-import { groupSites, nearbySites, passesFilters, searchInspections, leadInspection, type PlacedSite } from '../src/lib/sites.ts';
+import { groupSites, nearbySites, passesFilters, searchInspections, leadInspection, leadFirst, firstUnscheduled, type PlacedSite } from '../src/lib/sites.ts';
 
 // Synthetic export shaped like the Microsoft Lists "I&T Master" CSV (no real customer data).
 const HEADER =
@@ -87,8 +87,10 @@ test('same address with different formatting groups onto one site', () => {
   const bravo = sites.find((s) => s.inspections.length === 2);
   assert.ok(bravo);
   assert.equal(normalizeAddressKey('200 Oak Ave., Sun Prairie WI 53590'), normalizeAddressKey('200 Oak Ave, Sun Prairie, WI, 53590'));
-  // The unscheduled inspection leads the pin even though the scheduled one is due first.
-  assert.equal(leadInspection(bravo.inspections)?.title, 'Bravo Annex');
+  // The soonest due date leads the pin even when it is already scheduled.
+  assert.equal(leadInspection(bravo.inspections)?.title, 'Bravo Plant');
+  assert.deepEqual(leadFirst([...bravo.inspections].reverse()).map((i) => i.title), ['Bravo Plant', 'Bravo Annex']);
+  assert.equal(firstUnscheduled(bravo.inspections)?.title, 'Bravo Annex');
 });
 
 test('urgency bands and due filters', () => {

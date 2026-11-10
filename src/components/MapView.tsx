@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { formatDate, type Inspection, type Urgency } from '../lib/inspections.ts';
+import { formatDate, urgencyOf, type Inspection, type Urgency } from '../lib/inspections.ts';
 import type { PlacedSite } from '../lib/sites.ts';
 
 export type LabelMode = 'auto' | 'names' | 'dates' | 'dots';
@@ -56,15 +56,20 @@ function textWidth(text: string, weight: number): number {
   return measureCtx.measureText(text).width;
 }
 
-function dueText(lead: Inspection): string {
-  return `${lead.scheduled ? '✓ ' : ''}${formatDate(lead.due, 'short')}`;
+function dueText(insp: Inspection): string {
+  return `${insp.scheduled ? '✓ ' : ''}${formatDate(insp.due, 'short')}`;
 }
+
+/** Label padding + border, the gap between label parts, and the divider before each extra date. */
+const LABEL_CHROME = 16;
+const LABEL_GAP = 6;
+const DATE_DIVIDER = 7;
 
 function labelWidth(item: MapItem, kind: LabelKind): number {
   if (kind === 'dots') return 0;
-  let w = 16 + textWidth(dueText(item.lead), 700);
-  if (kind === 'names') w += Math.min(190, textWidth(item.lead.title, 600)) + 6;
-  if (item.list.length > 1) w += textWidth(`+${item.list.length - 1}`, 600) + 6;
+  let w = LABEL_CHROME + item.list.reduce((sum, i) => sum + textWidth(dueText(i), 700), 0);
+  w += (item.list.length - 1) * (LABEL_GAP + DATE_DIVIDER);
+  if (kind === 'names') w += Math.min(190, textWidth(item.lead.title, 600)) + LABEL_GAP;
   return w;
 }
 
@@ -118,11 +123,11 @@ function iconHtml(item: MapItem, place: Placement, selected: boolean, dim: boole
   const cls = ['pin', `u-${urgency}`, selected && 'is-selected', dim && 'is-dim', site.point.approx && 'is-approx', place.left && 'is-left']
     .filter(Boolean)
     .join(' ');
-  const dot = `<span class="pin-dot">${count > 1 ? count : ''}</span>`;
-  if (place.label === 'dots') return `<div class="${cls}">${dot}</div>`;
-  const more = count > 1 ? `<span class="pin-more">+${count - 1}</span>` : '';
+  // A bare dot can't show every date, so it shows how many inspections share the site instead.
+  if (place.label === 'dots') return `<div class="${cls}"><span class="pin-dot">${count > 1 ? count : ''}</span></div>`;
   const name = place.label === 'names' ? `<span class="pin-name">${esc(lead.title)}</span>` : '';
-  return `<div class="${cls}">${dot}<span class="pin-label">${name}<span class="pin-due">${esc(dueText(lead))}</span>${more}</span></div>`;
+  const dues = list.map((i) => `<span class="pin-due u-${urgencyOf(i)}">${esc(dueText(i))}</span>`).join('');
+  return `<div class="${cls}"><span class="pin-dot"></span><span class="pin-label">${name}${dues}</span></div>`;
 }
 
 export function MapView(props: Props) {
@@ -179,7 +184,9 @@ export function MapView(props: Props) {
         zIndexOffset: selected ? 20000 : hovered ? 15000 : dim ? RANK[item.urgency] - 5000 : RANK[item.urgency] + (place.label !== 'dots' ? 1000 : 0),
         riseOnHover: true,
         keyboard: false,
-        title: `${item.lead.title} — due ${formatDate(item.lead.due)}`,
+        title: `${item.lead.title} — ${item.list
+          .map((i) => `${i.frequency ? i.frequency + ' ' : ''}due ${formatDate(i.due)}${i.scheduled ? ' (scheduled)' : ''}`)
+          .join(', ')}`,
       });
       marker.on('click', () => {
         if (propsRef.current.placing) return;

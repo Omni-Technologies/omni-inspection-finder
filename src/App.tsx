@@ -5,6 +5,7 @@ import { geocodeAll, loadGeoCache, loadManualPins, saveGeoCache, saveManualPins,
 import { compareDue, parseInspections, startOfToday, URGENCY_LABEL, urgencyOf, type Inspection, type Urgency } from './lib/inspections.ts';
 import {
   DEFAULT_FILTERS,
+  firstUnscheduled,
   groupSites,
   leadFirst,
   nearbySites,
@@ -190,10 +191,11 @@ export default function App() {
 
   const inView = useMemo<ListEntry[]>(() => {
     const visible = bounds ? items.filter((i) => bounds.contains([i.site.point.lat, i.site.point.lon])) : items;
-    // Work still to be scheduled first (earliest due on top), already-scheduled sites after.
+    // Work still to be scheduled first (by its earliest unscheduled due date), fully scheduled sites after.
     return visible
-      .map((i) => ({ site: i.site, list: i.list }))
-      .sort((a, b) => Number(a.list[0].scheduled) - Number(b.list[0].scheduled) || compareDue(a.list[0], b.list[0]));
+      .map((i) => ({ site: i.site, list: i.list, open: firstUnscheduled(i.list) }))
+      .sort((a, b) => Number(!a.open) - Number(!b.open) || compareDue(a.open ?? a.list[0], b.open ?? b.list[0]))
+      .map(({ site, list }) => ({ site, list }));
   }, [items, bounds]);
 
   const unplaced = useMemo(() => {

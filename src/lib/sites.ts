@@ -48,15 +48,19 @@ export function visibleInspections(site: Site, filters: Filters, today = startOf
   return site.inspections.filter((i) => passesFilters(i, filters, today));
 }
 
-/** The inspection a pin represents: the most pressing unscheduled one, else the earliest. */
+/** The inspection a pin represents: the soonest due date at the site, scheduled or not. */
 export function leadInspection(list: Inspection[]): Inspection | undefined {
-  return list.find((i) => !i.scheduled && i.due) ?? list.find((i) => !i.scheduled) ?? list[0];
+  return leadFirst(list)[0];
 }
 
-/** Puts the lead inspection first so lists and pins agree on what a site represents. */
+/** Soonest due first, so lists and pins agree on what a site represents. */
 export function leadFirst(list: Inspection[]): Inspection[] {
-  const lead = leadInspection(list);
-  return lead ? [lead, ...list.filter((i) => i !== lead)] : list;
+  return [...list].sort(compareDue);
+}
+
+/** The soonest inspection at a site that still needs scheduling. */
+export function firstUnscheduled(list: Inspection[]): Inspection | undefined {
+  return leadFirst(list).find((i) => !i.scheduled);
 }
 
 export function siteUrgency(list: Inspection[], today = startOfToday()): Urgency {

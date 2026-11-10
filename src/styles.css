@@ -500,9 +500,12 @@ h2 {
   white-space: nowrap;
 }
 
-.more {
-  color: var(--ink-3);
-  font-weight: 500;
+.row-dues {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
 }
 
 .chip-check {
@@ -865,9 +868,9 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
-.pin-more {
-  color: var(--ink-3);
-  font-weight: 600;
+.pin-due + .pin-due {
+  padding-left: 6px;
+  border-left: 1px solid var(--line);
 }
 
 .pin.is-selected .pin-dot {

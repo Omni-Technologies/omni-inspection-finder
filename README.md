@@ -13,8 +13,11 @@ a map with its company name, address and due date, plus what else is due nearby.
    After that, pins load instantly, and a new export only looks up new addresses.
 3. Find inspections either way:
    - **Map:** zoom in and labels appear with the company name and due date,
-     colour-coded by urgency. Crowded labels shrink to just the date or a dot,
-     so zoom in further or hover a pin to see it.
+     colour-coded by urgency. When an address has more than one inspection
+     (say an annual and a semi-annual), the label shows every due date,
+     soonest first, and the pin takes the soonest one's colour. Crowded labels
+     shrink to just the dates or a dot, so zoom in further or hover a pin to
+     see it.
    - **Search:** type a company, client, address or project number (press `/`
      to jump to the search box). Picking a result flies to it and lists every
      other inspection within the chosen radius, nearest first, with due dates
